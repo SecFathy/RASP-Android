@@ -24,3 +24,31 @@
   - Periodically checks for security threats every 5 seconds.
   - Terminates the application if any suspicious activity is detected.
 
+## How to Load the Library
+
+Follow these steps to load the **Android Security Check** class into your Android application:
+
+### 1. Add the Class to Your Project
+
+Ensure that the `SecurityCheck` class is included in your project directory. This class should be located in the appropriate package in your Android app.
+
+### 2. Initialize the Security Check Class
+
+In your `MainActivity` (or any other activity where you want to use the security checks), you can instantiate and run the security checks. Here’s how you can initialize it:
+
+```kotlin
+import com.example.securitycheck.SecurityCheck // Import the security check class
+
+class MainActivity : AppCompatActivity() {
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        // Initialize the SecurityCheck
+        val securityCheck = SecurityCheck(this)
+
+        // Start the security monitoring process
+        securityCheck.startMonitoring()
+    }
+}
