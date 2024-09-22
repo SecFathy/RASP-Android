@@ -2,9 +2,11 @@ package com.example.security
 
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Debug
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
+import android.widget.Toast
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
@@ -38,15 +40,15 @@ class SecurityCheck(private val context: Context) {
     )
 
     /**
-     * Starts periodic checks for Frida and ADB presence.
+     * Starts periodic checks for Frida, root, and debugger presence.
      * Terminates the app if any suspicious activity is detected.
      */
     fun monitorSecurityThreats() {
         val handler = Handler(Looper.getMainLooper())
         handler.post(object : Runnable {
             override fun run() {
-                if (isAdbEnabled() || isAdbOverWifiEnabled() || detectFrida() || isFridaPackageInstalled()) {
-                    terminateApp()
+                if (isAdbEnabled() || isAdbOverWifiEnabled() || detectFrida() || isFridaPackageInstalled() || isDeviceRooted() || isDebuggerAttached()) {
+                    alertAndTerminateApp()
                 } else {
                     handler.postDelayed(this, 5000)
                 }
@@ -166,6 +168,27 @@ class SecurityCheck(private val context: Context) {
     }
 
     /**
+     * Check if the device is rooted by checking for the existence of root binaries.
+     */
+    private fun isDeviceRooted(): Boolean {
+        val rootPaths = listOf(
+            "/system/app/Superuser.apk",
+            "/system/xbin/su",
+            "/system/bin/su",
+            "/system/xbin/daemonsu",
+            "/system/etc/init.d/99SuperSUDaemon"
+        )
+        return rootPaths.any { File(it).exists() }
+    }
+
+    /**
+     * Check if a debugger is attached to the app.
+     */
+    private fun isDebuggerAttached(): Boolean {
+        return Debug.isDebuggerConnected()
+    }
+
+    /**
      * Retrieve a secure setting's value from the system.
      */
     private fun getSecureSettingValue(settingName: String): Int {
@@ -177,9 +200,12 @@ class SecurityCheck(private val context: Context) {
     }
 
     /**
-     * Terminate the application when a threat is detected.
+     * Show an alert and terminate the application when a threat is detected.
      */
-    private fun terminateApp() {
-        android.os.Process.killProcess(android.os.Process.myPid())
+    private fun alertAndTerminateApp() {
+        Toast.makeText(context, "Security threat detected! The app will be terminated.", Toast.LENGTH_LONG).show()
+        Handler(Looper.getMainLooper()).postDelayed({
+            android.os.Process.killProcess(android.os.Process.myPid())
+        }, 3000) // Delay for 3 seconds to show the toast before killing the app
     }
 }
